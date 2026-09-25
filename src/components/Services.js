@@ -8,12 +8,12 @@ import {
   Server,
   Headset,
   GraduationCap,
-  Camera,
-  Fingerprint,
-  BellRing,
-  Zap,
-  DoorOpen,
-  Flame,
+  // Camera,
+  // Fingerprint,
+  // BellRing,
+  // Zap,
+  // DoorOpen,
+  // Flame,
 } from "lucide-react";
 
 const domains = [
@@ -65,54 +65,54 @@ const domains = [
       },
     ],
   },
-  {
-    label: "Domain 02",
-    title: "Security Systems & Installation",
-    services: [
-      {
-        icon: Camera,
-        title: "CCTV & Video Surveillance",
-        color: "#6366f1",
-        description:
-          "High-definition camera systems, professionally installed for real-time monitoring and playback.",
-      },
-      {
-        icon: Fingerprint,
-        title: "Access Control & Biometrics",
-        color: "#10b981",
-        description:
-          "Fingerprint and card-based access systems that manage who enters a site, and when.",
-      },
-      {
-        icon: BellRing,
-        title: "Intruder & Alarm Systems",
-        color: "#f43f5e",
-        description:
-          "Motion sensors and alarm systems that detect intrusions and trigger instant alerts.",
-      },
-      {
-        icon: Zap,
-        title: "Electric Fencing & Perimeter",
-        color: "#f97316",
-        description:
-          "Perimeter fencing designed to deter unauthorised access around a property or site.",
-      },
-      {
-        icon: DoorOpen,
-        title: "Automated Gates",
-        color: "#06b6d4",
-        description:
-          "Motorised gate automation for secure, convenient entry management.",
-      },
-      {
-        icon: Flame,
-        title: "Fire & Panic Alarm Systems",
-        color: "#dc2626",
-        description:
-          "Smoke detection, siren networks and panic-button systems for fast emergency response.",
-      },
-    ],
-  },
+  // {
+  //   label: "Domain 02",
+  //   title: "Security Systems & Installation",
+  //   services: [
+  //     {
+  //       icon: Camera,
+  //       title: "CCTV & Video Surveillance",
+  //       color: "#6366f1",
+  //       description:
+  //         "High-definition camera systems, professionally installed for real-time monitoring and playback.",
+  //     },
+  //     {
+  //       icon: Fingerprint,
+  //       title: "Access Control & Biometrics",
+  //       color: "#10b981",
+  //       description:
+  //         "Fingerprint and card-based access systems that manage who enters a site, and when.",
+  //     },
+  //     {
+  //       icon: BellRing,
+  //       title: "Intruder & Alarm Systems",
+  //       color: "#f43f5e",
+  //       description:
+  //         "Motion sensors and alarm systems that detect intrusions and trigger instant alerts.",
+  //     },
+  //     {
+  //       icon: Zap,
+  //       title: "Electric Fencing & Perimeter",
+  //       color: "#f97316",
+  //       description:
+  //         "Perimeter fencing designed to deter unauthorised access around a property or site.",
+  //     },
+  //     {
+  //       icon: DoorOpen,
+  //       title: "Automated Gates",
+  //       color: "#06b6d4",
+  //       description:
+  //         "Motorised gate automation for secure, convenient entry management.",
+  //     },
+  //     {
+  //       icon: Flame,
+  //       title: "Fire & Panic Alarm Systems",
+  //       color: "#dc2626",
+  //       description:
+  //         "Smoke detection, siren networks and panic-button systems for fast emergency response.",
+  //     },
+  //   ],
+  // },
 ];
 
 const Services = () => {
