@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
   Shield,
@@ -9,6 +9,12 @@ import {
   Grid2X2,
   Info,
   Mail,
+  Users,
+  FolderOpen,
+  Briefcase,
+  LogIn,
+  LayoutGrid,
+  X,
 } from "lucide-react";
 
 const navLinks = [
@@ -16,15 +22,18 @@ const navLinks = [
   { name: "Services", href: "#services", icon: BriefcaseBusiness },
   { name: "Solutions", href: "#solutions", icon: Grid2X2 },
   { name: "About", href: "#about", icon: Info },
-  { name: "Projects", href: "#portfolio", icon: BriefcaseBusiness },
-  { name: "Careers", href: "#careers", icon: BriefcaseBusiness },
-  { name: "Technicians", href: "/technicians", icon: BriefcaseBusiness },
+  { name: "Projects", href: "#portfolio", icon: FolderOpen },
+  { name: "Careers", href: "#careers", icon: Briefcase },
+  { name: "Technicians", href: "/technicians", icon: Users },
   { name: "Contact", href: "#contact", icon: Mail },
+  { name: "Sign in", href: "/login", icon: LogIn },
 ];
+
 
 const Header = () => {
   const navigate = useNavigate();
   const [scrolled, setScrolled] = useState(false);
+  const [more, setMore] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 50);
@@ -34,6 +43,7 @@ const Header = () => {
   }, []);
 
   const handleScrollTo = (id) => {
+    setMore(false);
     if (id.startsWith("/")) return navigate(id);
     const el = document.querySelector(id);
 
@@ -172,6 +182,54 @@ const Header = () => {
       </header>
 
       {/* =========================
+          MOBILE "MORE" SHEET (all links)
+      ========================== */}
+      <AnimatePresence>
+        {more && (
+          <>
+            <motion.div
+              key="backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMore(false)}
+              className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm md:hidden"
+            />
+            <motion.div
+              key="sheet"
+              initial={{ opacity: 0, y: 40, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 40, scale: 0.97 }}
+              transition={{ duration: 0.25 }}
+              className="fixed left-3 right-3 bottom-28 z-50 md:hidden rounded-3xl bg-ink/95 backdrop-blur-2xl border border-white/10 shadow-2xl p-4"
+            >
+              <div className="flex items-center justify-between mb-3 px-1">
+                <span className="text-white font-semibold">Menu</span>
+                <button onClick={() => setMore(false)} aria-label="Close menu" className="w-8 h-8 grid place-items-center rounded-full bg-white/10 text-white/80">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+              <div className="grid grid-cols-3 gap-2.5">
+                {navLinks.map((link) => {
+                  const Icon = link.icon;
+                  return (
+                    <button
+                      key={link.name}
+                      onClick={() => handleScrollTo(link.href)}
+                      className="flex flex-col items-center gap-1.5 rounded-2xl bg-white/[0.06] hover:bg-white/10 active:scale-95 transition py-3 text-white/80"
+                    >
+                      <Icon className="w-5 h-5" />
+                      <span className="text-[11px] font-medium">{link.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* =========================
           MOBILE BOTTOM NAVIGATION
       ========================== */}
       <motion.nav
@@ -187,51 +245,60 @@ const Header = () => {
         "
       >
         <div className="flex items-center justify-around px-2 py-2">
-          {navLinks.slice(0, 4).map((link) => {
+          {[navLinks[0], navLinks[1]].map((link) => {
             const Icon = link.icon;
-
             return (
               <motion.button
                 key={link.name}
                 onClick={() => handleScrollTo(link.href)}
                 whileTap={{ scale: 0.85 }}
-                className="
-                  flex flex-col items-center justify-center
-                  gap-1 min-w-[58px]
-                  py-1.5 rounded-2xl
-                  text-white/60 hover:text-white
-                  transition-all duration-300
-                "
+                className="flex flex-col items-center justify-center gap-1 min-w-[54px] py-1.5 rounded-2xl text-white/60 hover:text-white transition-all duration-300"
               >
-                <div className="w-8 h-8 flex items-center justify-center rounded-xl hover:bg-white/10 transition-colors">
-                  <Icon className="w-4 h-4" />
-                </div>
-
-                <span className="text-[9px] font-medium">
-                  {link.name}
-                </span>
+                <div className="w-8 h-8 flex items-center justify-center rounded-xl"><Icon className="w-4 h-4" /></div>
+                <span className="text-[9px] font-medium">{link.name}</span>
               </motion.button>
             );
           })}
 
-          {/* Contact Highlight */}
+          {/* Contact highlight (centre) */}
           <motion.button
             onClick={() => handleScrollTo("#contact")}
             whileTap={{ scale: 0.88 }}
-            className="
-              flex flex-col items-center justify-center
-              gap-1 min-w-[58px]
-              py-1.5 rounded-2xl
-              text-signal
-            "
+            className="flex flex-col items-center justify-center gap-1 min-w-[54px] py-1.5 rounded-2xl text-signal"
           >
             <div className="w-9 h-9 -mt-5 rounded-2xl bg-signal text-white flex items-center justify-center shadow-lg border-4 border-ink">
               <Mail className="w-4 h-4" />
             </div>
+            <span className="text-[9px] font-semibold">Contact</span>
+          </motion.button>
 
-            <span className="text-[9px] font-semibold">
-              Contact
-            </span>
+          {navLinks.filter((l) => l.name === "Technicians").map((link) => {
+            const Icon = link.icon;
+            return (
+              <motion.button
+                key={link.name}
+                onClick={() => handleScrollTo(link.href)}
+                whileTap={{ scale: 0.85 }}
+                className="flex flex-col items-center justify-center gap-1 min-w-[54px] py-1.5 rounded-2xl text-white/60 hover:text-white transition-all duration-300"
+              >
+                <div className="w-8 h-8 flex items-center justify-center rounded-xl"><Icon className="w-4 h-4" /></div>
+                <span className="text-[9px] font-medium">{link.name}</span>
+              </motion.button>
+            );
+          })}
+
+          {/* More: opens every link */}
+          <motion.button
+            onClick={() => setMore(!more)}
+            whileTap={{ scale: 0.85 }}
+            aria-label="More links"
+            aria-expanded={more}
+            className={`flex flex-col items-center justify-center gap-1 min-w-[54px] py-1.5 rounded-2xl transition-all duration-300 ${more ? "text-white" : "text-white/60 hover:text-white"}`}
+          >
+            <div className={`w-8 h-8 flex items-center justify-center rounded-xl ${more ? "bg-white/15" : ""}`}>
+              {more ? <X className="w-4 h-4" /> : <LayoutGrid className="w-4 h-4" />}
+            </div>
+            <span className="text-[9px] font-medium">More</span>
           </motion.button>
         </div>
       </motion.nav>

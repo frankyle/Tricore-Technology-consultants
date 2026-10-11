@@ -156,7 +156,7 @@ function CompanyPanel({ user }) {
 
 // Shown only if the profile row isn't there yet. Retries by itself instead of asking for a refresh.
 function SettingUp() {
-  const { refreshProfile } = useAuth();
+  const { refreshProfile, profileError } = useAuth();
   const [tries, setTries] = useState(0);
   useEffect(() => {
     if (tries >= 8) return;
@@ -173,6 +173,8 @@ function SettingUp() {
       ) : (
         <>
           <p className="font-medium">We couldn't load your account yet.</p>
+          {profileError && <p className="text-xs text-left bg-red-50 border border-red-200 text-red-800 rounded p-2 break-words">Technical detail: {profileError}</p>}
+          <p className="text-xs text-slateSoft">Run <b>supabase/06_reset_profile_setup.sql</b> in the Supabase SQL Editor, then try again.</p>
           <button className={btn} onClick={() => setTries(0)}>Try again</button>
         </>
       )}
@@ -200,9 +202,12 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="font-display text-3xl font-semibold">Welcome{profile.full_name ? `, ${profile.full_name}` : ""}</h1>
-        <p className="text-slateSoft capitalize">{profile.role} account</p>
+      <div className="flex items-center gap-4">
+        {profile.avatar_url && <img src={profile.avatar_url} alt="" className="w-16 h-16 rounded-full object-cover border border-line" />}
+        <div>
+          <h1 className="font-display text-3xl font-semibold">Welcome{profile.full_name ? `, ${profile.full_name}` : ""}</h1>
+          <p className="text-slateSoft capitalize">{profile.role} account</p>
+        </div>
       </div>
       {profile.role === "technician" && (
         <>

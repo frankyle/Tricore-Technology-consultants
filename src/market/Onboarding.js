@@ -2,10 +2,11 @@ import React, { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import {
   User, Phone, MapPin, Briefcase, Clock, Building2, Award, Wrench, FileText,
-  CheckCircle2, ArrowRight, Loader2, AlertCircle, PartyPopper,
+  CheckCircle2, ArrowRight, Loader2, AlertCircle, PartyPopper, Camera, ImagePlus, X,
 } from "lucide-react";
 import { supabase } from "../supabaseClient";
 import { useAuth } from "../context/AuthContext";
+import { mediaUrl, MAX_IMG } from "./ui";
 
 const fld = "w-full border border-line rounded-xl py-3 pl-11 pr-3 bg-white text-base text-slate placeholder:text-slateSoft/70 focus:outline-none focus:border-signal focus:ring-4 focus:ring-signal/15 transition";
 const area = "w-full border border-line rounded-xl py-3 pl-11 pr-3 bg-white text-base text-slate placeholder:text-slateSoft/70 focus:outline-none focus:border-signal focus:ring-4 focus:ring-signal/15 transition resize-none";
@@ -19,6 +20,28 @@ const Input = ({ icon: Icon, multiline, ...p }) => (
 );
 
 const slide = { initial: { opacity: 0, x: 24 }, animate: { opacity: 1, x: 0 }, exit: { opacity: 0, x: -24 }, transition: { duration: 0.25 } };
+const IMG_TYPES = ["image/jpeg", "image/png", "image/webp"];
+const okImg = (file) => IMG_TYPES.includes(file.type) ? (file.size <= MAX_IMG ? "" : "Images must be under 2 MB.") : "Use JPG, PNG or WebP images.";
+const upload = async (userId, file, prefix) => {
+  const path = `${userId}/${prefix}-${Date.now()}-${file.name.replace(/[^\w.-]/g, "_")}`;
+  const up = await supabase.storage.from("portfolio").upload(path, file);
+  if (up.error) throw up.error;
+  return path;
+};
+
+function PhotoPicker({ label, file, onPick }) {
+  const url = React.useMemo(() => (file ? URL.createObjectURL(file) : ""), [file]);
+  return (
+    <label className="flex items-center gap-4 cursor-pointer group">
+      <span className="relative grid place-items-center w-20 h-20 rounded-full border-2 border-dashed border-line bg-paper overflow-hidden group-hover:border-signal transition">
+        {url ? <img src={url} alt="" className="w-full h-full object-cover" /> : <Camera className="w-7 h-7 text-slateSoft" />}
+      </span>
+      <span className="text-sm"><span className="font-medium block">{label}</span><span className="text-slateSoft">JPG, PNG or WebP, up to 2 MB</span></span>
+      <input type="file" accept={IMG_TYPES.join(",")} className="hidden" onChange={(e) => { const x = e.target.files[0]; e.target.value = ""; if (x) onPick(x); }} />
+    </label>
+  );
+}
+
 const list = (s) => s.split(",").map((x) => x.trim()).filter(Boolean);
 
 // First-login profile creation: details -> (technicians) skills & certifications -> done.
@@ -26,7 +49,9 @@ const list = (s) => s.split(",").map((x) => x.trim()).filter(Boolean);
 export default function Onboarding({ onDone, onSkip }) {
   const { user, profile, refreshProfile } = useAuth();
   const role = profile.role;
-  const [phase, setPhase] = useState("details"); // details | skills | done
+  const [phase, setPhase] = useState("details"); // details | skills | photos | done
+  const [photo, setPhoto] = useState(null);
+  const [work, setWork] = useState([]);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState("");
   const [f, setF] = useState({
@@ -35,15 +60,21 @@ export default function Onboarding({ onDone, onSkip }) {
   });
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
 
-  const steps = role === "technician" ? ["Details", "Skills & certificates", "Done"] : ["Details", "Done"];
-  const idx = phase === "details" ? 0 : phase === "skills" ? 1 : steps.length - 1;
+  const steps = role === "technician" ? ["Details", "Skills & certificates", "Work photos", "Done"] : ["Details", "Done"];
+  const idx = phase === "details" ? 0 : phase === "skills" ? 1 : phase === "photos" ? 2 : steps.length - 1;
   const fail = (m) => { setBusy(false); setMsg(m); };
 
   const saveDetails = async (e) => {
     e.preventDefault();
     setBusy(true); setMsg("");
     const name = f.full_name.trim();
-    const p = await supabase.from("profiles").update({ full_name: name, phone: f.phone.trim() }).eq("id", user.id);
+    let photoUrl = null;
+    if (photo) {
+      const bad = okImg(photo);
+      if (bad) return fail(bad);
+      try { photoUrl = mediaUrl(await upload(user.id, photo, "avatar")); } catch (err) { return fail(err.message); }
+    }
+    const p = await supabase.from("profiles").update({ full_name: name, phone: f.phone.trim(), ...(photoUrl ? { avatar_url: photoUrl } : {}) }).eq("id", user.id);
     if (p.error) return fail(p.error.message);
 
     if (role === "technician") {
@@ -56,12 +87,14 @@ export default function Onboarding({ onDone, onSkip }) {
         ? await supabase.from("technicians").update(row).eq("id", user.id)
         : await supabase.from("technicians").insert({ ...row, id: user.id });
       if (r.error) return fail(r.error.message);
+      // public profile photo (needs the avatar column from 06_reset_profile_setup.sql; ignored if missing)
+      if (photoUrl) await supabase.from("technicians").update({ avatar_url: photoUrl }).eq("id", user.id);
       setBusy(false);
       return setPhase("skills");
     }
     if (role === "company") {
       const { data: ex } = await supabase.from("companies").select("id").eq("owner_id", user.id).limit(1).maybeSingle();
-      const row = { name: f.company.trim(), city: f.city.trim() || null, description: f.description.trim() || null };
+      const row = { name: f.company.trim(), city: f.city.trim() || null, description: f.description.trim() || null, ...(photoUrl ? { logo_url: photoUrl } : {}) };
       const r = ex
         ? await supabase.from("companies").update(row).eq("id", ex.id)
         : await supabase.from("companies").insert({ ...row, owner_id: user.id });
@@ -78,6 +111,27 @@ export default function Onboarding({ onDone, onSkip }) {
     const skills = [...new Set([...list(f.skills), ...list(f.certs)])];
     const r = await supabase.from("technicians").update({ skills, bio: f.bio.trim() || null }).eq("id", user.id);
     if (r.error) return fail(r.error.message);
+    setBusy(false);
+    setPhase("photos");
+  };
+
+  const addWork = (e) => {
+    const files = [...e.target.files];
+    e.target.value = "";
+    for (const x of files) { const bad = okImg(x); if (bad) return setMsg(`${x.name}: ${bad}`); }
+    setMsg("");
+    setWork((w) => [...w, ...files].slice(0, 8));
+  };
+
+  const saveWork = async () => {
+    setBusy(true); setMsg("");
+    try {
+      for (const file of work) {
+        const path = await upload(user.id, file, "work");
+        const { error } = await supabase.from("portfolio_items").insert({ technician_id: user.id, media_type: "image", storage_path: path });
+        if (error) throw error;
+      }
+    } catch (err) { return fail(err.message); }
     setBusy(false);
     setPhase("done");
   };
@@ -109,6 +163,7 @@ export default function Onboarding({ onDone, onSkip }) {
                     {role === "technician" ? "Tell clients who you are." : role === "company" ? "Tell us about you and your company." : "So technicians know who they're helping."}
                   </p>
                 </div>
+                <PhotoPicker label={role === "company" ? "Company logo" : "Profile photo"} file={photo} onPick={(x) => { const bad = okImg(x); if (bad) setMsg(bad); else { setMsg(""); setPhoto(x); } }} />
                 <Input icon={User} placeholder="Full name" required autoComplete="name" value={f.full_name} onChange={set("full_name")} />
                 <Input icon={Phone} type="tel" inputMode="tel" placeholder="Phone / WhatsApp (e.g. +255 7XX XXX XXX)" required autoComplete="tel" value={f.phone} onChange={set("phone")} />
                 {role === "company" && (
@@ -150,6 +205,34 @@ export default function Onboarding({ onDone, onSkip }) {
               </motion.form>
             )}
 
+            {phase === "photos" && (
+              <motion.div key="photos" {...slide} className="space-y-3.5">
+                <div>
+                  <h1 className="font-display text-2xl font-semibold">Show your work</h1>
+                  <p className="text-sm text-slateSoft">Add photos of jobs you've done (up to 8). Clients trust profiles with photos.</p>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {work.map((file, i) => (
+                    <div key={i} className="relative aspect-square rounded-lg overflow-hidden border border-line">
+                      <img src={URL.createObjectURL(file)} alt="" className="w-full h-full object-cover" />
+                      <button type="button" aria-label="Remove" onClick={() => setWork(work.filter((_, j) => j !== i))} className="absolute top-1 right-1 grid place-items-center w-6 h-6 rounded-full bg-ink/70 text-white"><X className="w-3.5 h-3.5" /></button>
+                    </div>
+                  ))}
+                  {work.length < 8 && (
+                    <label className="aspect-square grid place-items-center rounded-lg border-2 border-dashed border-line text-slateSoft hover:border-signal hover:text-signal cursor-pointer transition">
+                      <ImagePlus className="w-7 h-7" />
+                      <input type="file" multiple accept={IMG_TYPES.join(",")} className="hidden" onChange={addWork} />
+                    </label>
+                  )}
+                </div>
+                {msg && <p className="flex gap-2 text-sm text-red-700"><AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />{msg}</p>}
+                <button className={cta} disabled={busy || !work.length} onClick={saveWork}>
+                  {busy ? <Loader2 className="w-5 h-5 animate-spin" /> : <>Upload & finish <ArrowRight className="w-4 h-4" /></>}
+                </button>
+                <button type="button" onClick={() => { setMsg(""); setPhase("done"); }} className="w-full text-sm text-slateSoft hover:text-slate">Skip for now</button>
+              </motion.div>
+            )}
+
             {phase === "done" && (
               <motion.div key="done" {...slide} className="text-center space-y-4 py-2">
                 <motion.div initial={{ scale: 0, rotate: -15 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: "spring", stiffness: 260, damping: 15 }}
@@ -159,7 +242,7 @@ export default function Onboarding({ onDone, onSkip }) {
                 <h1 className="font-display text-2xl font-semibold">You're all set</h1>
                 {role === "technician" ? (
                   <ul className="text-left text-sm space-y-2 max-w-xs mx-auto">
-                    {["Add photos and videos of your work on your dashboard", "Check your public page", "Browse open job requests"].map((t) => (
+                    {["Add videos and more work photos on your dashboard", "Check your public page", "Browse open job requests"].map((t) => (
                       <li key={t} className="flex gap-2"><CheckCircle2 className="w-4 h-4 mt-0.5 text-signal shrink-0" />{t}</li>
                     ))}
                   </ul>
