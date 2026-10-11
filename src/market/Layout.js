@@ -11,11 +11,11 @@ export default function Layout() {
   return (
     <div className="min-h-screen bg-paper">
       <header className="bg-ink text-white">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-4">
-          <Link to="/" className="flex items-center gap-2 font-display font-semibold">
+        <div className="container mx-auto px-4 h-16 flex items-center justify-between gap-3">
+          <Link to="/" className="flex items-center gap-2 font-display font-semibold shrink-0">
             <Shield className="w-5 h-5" /> Tricore
           </Link>
-          <nav className="flex items-center gap-4 text-sm">
+          <nav className="flex items-center gap-3 sm:gap-4 text-sm whitespace-nowrap overflow-x-auto min-w-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <Link className={l} to="/technicians">Technicians</Link>
             <Link className={l} to="/companies">Companies</Link>
             <Link className={l} to="/jobs">Jobs</Link>

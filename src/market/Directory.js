@@ -36,7 +36,9 @@ export function Technicians() {
             const img = t.portfolio_items?.find((p) => p.media_type === "image");
             return (
               <Link key={t.id} to={`/technicians/${t.id}`} className={card + " block hover:shadow-md"}>
-                {img && <img src={mediaUrl(img.storage_path)} alt="" loading="lazy" className="w-full h-40 object-cover rounded-lg mb-3" />}
+                {img
+                  ? <img src={mediaUrl(img.storage_path)} alt="" loading="lazy" className="w-full h-40 object-cover rounded-lg mb-3" />
+                  : t.avatar_url && <img src={t.avatar_url} alt="" loading="lazy" className="w-full h-40 object-cover rounded-lg mb-3" />}
                 <h3 className="font-semibold">{t.display_name}{t.verified && <Verified />}</h3>
                 <p className="text-sm text-slateSoft">{t.headline}</p>
                 {t.city && <p className="text-xs mt-1"><MapPin className="inline w-3 h-3" /> {t.city}</p>}
@@ -70,6 +72,7 @@ export function TechnicianDetail() {
     <div className="grid lg:grid-cols-3 gap-6">
       <div className="lg:col-span-2 space-y-4">
         <div className={card}>
+          {t.avatar_url && <img src={t.avatar_url} alt="" className="w-24 h-24 rounded-full object-cover border border-line mb-3" />}
           <h1 className="font-display text-3xl font-semibold">{t.display_name}{t.verified && <Verified />}</h1>
           <p className="text-slateSoft">{t.headline}</p>
           <p className="text-sm mt-2">
